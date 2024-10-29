@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NFL Monte Carlo Simulation</title>
+    <style>
+        /* General Styles */
+        body {
+            background-color: #FFFFFF;
+            color: #1D1D1F;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            font-weight: 700;
+            color: #1D1D1F;
+        }
+        /* Form Group */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .form-group label {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: #1D1D1F;
+        }
+        .form-group select {
+            padding: 12px;
+            border: 1px solid #C7C7CC;
+            border-radius: 8px;
+            background-color: #F2F2F7;
+            font-size: 1rem;
+            color: #1D1D1F;
+            width: 100%;
+        }
+        /* Preset Buttons */
+        .preset-btn-group {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .preset-btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: 1px solid #C7C7CC;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            background-color: #F2F2F7;
+            color: #1D1D1F;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .preset-btn.active {
+            background-color: #0A84FF;
+            color: #FFFFFF;
+            border: none;
+        }
+        .preset-btn:hover {
+            background-color: #D1D1D6;
+        }
+        /* Run Simulation Buttons */
+        .run-btn-group {
+            display: flex;
+            gap: 15px;
+        }
+        .run-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            background-color: #0A84FF;
+            color: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s ease-in-out;
+        }
+        .run-btn:hover {
+            background-color: #0066CC;
+        }
+        /* Info Box */
+        .info-box {
+            background-color: #F2F2F7;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            text-align: left;
+        }
+        .info-box p {
+            font-size: 1rem;
+            margin-bottom: 5px;
+            color: #1D1D1F;
+        }
+        /* Results */
+        #results {
+            max-width: 600px;
+            padding: 30px;
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            text-align: left;
+            width: 100%;
+        }
+        #results h2 {
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+            color: #1D1D1F;
+        }
+        #results p {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #1D1D1F;
+        }
+        #results strong {
+            font-weight: 600;
+            color: #1D1D1F;
+        }
+    </style>
+    <!-- Load Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>NFL Monte Carlo Simulation</h1>
+    
+    <!-- Matchup Selection -->
+    <div class="form-group">
+        <label for="matchup">Select Matchup:</label>
+        <select id="matchup"></select>
+    </div>
+    
+    <!-- Preset Options -->
+    <div class="preset-btn-group">
+        <button class="preset-btn" onclick="setIterations(1000)">1,000 (Quick Estimate)</button>
+        <button class="preset-btn active" onclick="setIterations(10000)">10,000 (Standard Practice)</button>
+        <button class="preset-btn" onclick="setIterations(100000)">100,000 (High Precision)</button>
+        <button class="preset-btn" onclick="setIterations(1000000)">1,000,000 (Very High Precision)</button>
+    </div>
+    
+    <!-- Info Box -->
+    <div class="info-box">
+        <p id="confidenceLevel">Confidence Level: Good Confidence</p>
+        <p id="estimatedTime">Estimated Time: ~1 second</p>
+    </div>
+
+    <!-- Run Simulation Buttons -->
+    <div class="run-btn-group">
+        <button class="run-btn" onclick="runSimulation()">Run Simulation</button>
+        <button class="run-btn" onclick="runAllSimulations()">Run All</button>
+    </div>
+
+    <!-- Results -->
+    <div id="results">
+        <!-- Results will be populated here -->
+    </div>
+
+    <script>
+    const simulationPresets = [1000, 10000, 100000, 1000000];
+    let numIterations = 10000;  // Default to 10,000
+
+    // Function to fetch and display upcoming games in the dropdown
+    fetch('/upcoming_games')
+        .then(response => response.json())
+        .then(data => {
+            const matchupDropdown = document.getElementById('matchup');
+            data.forEach(game => {
+                const option = document.createElement('option');
+                option.value = JSON.stringify({ home_team: game.home_team, away_team: game.away_team });
+                option.text = `${game.home_team} vs. ${game.away_team}`;
+                matchupDropdown.add(option);
+            });
+        });
+
+    function setIterations(value) {
+        numIterations = value;
+        updateInfoBox();
+        setActiveButton(value);
+    }
+
+    function setActiveButton(value) {
+        const buttons = document.querySelectorAll('.preset-btn');
+        buttons.forEach(button => {
+            if (button.textContent.includes(value.toLocaleString())) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+    }
+
+    function updateInfoBox() {
+        document.getElementById('confidenceLevel').textContent = "Confidence Level: " + getConfidenceLevel(numIterations);
+        document.getElementById('estimatedTime').textContent = "Estimated Time: " + getTimeEstimate(numIterations);
+    }
+
+    function getConfidenceLevel(iterations) {
+        if (iterations >= 1000000) return 'Very High Confidence';
+        if (iterations >= 100000) return 'High Confidence';
+        if (iterations >= 10000) return 'Good Confidence';
+        if (iterations >= 1000) return 'Basic Confidence';
+        return 'Low Confidence';
+    }
+
+    function getTimeEstimate(iterations) {
+        const seconds = iterations / 10000;
+        if (seconds < 60) return `~${Math.ceil(seconds)} seconds`;
+        if (seconds < 3600) return `~${Math.ceil(seconds / 60)} minutes`;
+        return `~${(seconds / 3600).toFixed(1)} hours`;
+    }
+
+    function runSimulation() {
+        const selectedMatchup = JSON.parse(document.getElementById('matchup').value);
+        fetchSimulationResults(selectedMatchup, numIterations);
+    }
+
+    function runAllSimulations() {
+        const selectedMatchup = JSON.parse(document.getElementById('matchup').value);
+
+        // Clear previous results
+        document.getElementById('results').innerHTML = '';
+
+        // Run each preset simulation and fetch aggregated results
+        Promise.all(simulationPresets.map(preset => fetchSimulationResults(selectedMatchup, preset)))
+            .then(() => fetchAggregatedResults(selectedMatchup));
+    }
+
+    function fetchSimulationResults(selectedMatchup, iterations) {
+        return fetch('/simulate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ home_team: selectedMatchup.home_team, away_team: selectedMatchup.away_team, num_simulations: iterations })
+        })
+        .then(response => response.json())
+        .then(data => displaySimulationResult(data, iterations));
+    }
+
+    function fetchAggregatedResults(selectedMatchup) {
+        return fetch('/simulate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ home_team: selectedMatchup.home_team, away_team: selectedMatchup.away_team, num_simulations: "run_all" })
+        })
+        .then(response => response.json())
+        .then(data => displaySimulationResult(data, "Aggregate of All Runs"));
+    }
+
+    function displaySimulationResult(data, iterationsLabel) {
+        const resultSection = document.createElement('div');
+        resultSection.classList.add('result-section');
+        resultSection.innerHTML = `
+            <h2>Results for ${iterationsLabel} Simulations</h2>
+            <p>Home Win Percentage: <strong>${data['Home Win Percentage'].toFixed(2)}%</strong></p>
+            <p>Away Win Percentage: <strong>${data['Away Win Percentage'].toFixed(2)}%</strong></p>
+            <p>Average Home Score: <strong>${data['Average Home Score'].toFixed(2)}</strong></p>
+            <p>Average Away Score: <strong>${data['Average Away Score'].toFixed(2)}</strong></p>
+            <p>Average Total Score: <strong>${data['Average Total Score'].toFixed(2)}</strong></p>
+            <p>Score Differential (Home - Away): <strong>${data['Score Differential (Home - Away)'].toFixed(2)}</strong></p>
+            <p>Home Team Max Score: <strong>${data['Home Max Score']}</strong></p>
+            <p>Home Team Min Score: <strong>${data['Home Min Score']}</strong></p>
+            <p>Away Team Max Score: <strong>${data['Away Max Score']}</strong></p>
+            <p>Away Team Min Score: <strong>${data['Away Min Score']}</strong></p>
+        `;
+        document.getElementById('results').appendChild(resultSection);
+    }
+</script>
+
+</body>
+</html>
+

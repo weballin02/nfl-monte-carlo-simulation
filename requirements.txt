@@ -1,0 +1,4 @@
+Flask
+nfl_data_py
+numpy
+pandas
