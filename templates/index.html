@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NFL Monte Carlo Simulation</title>
+    <title>NFL Monte Carlo Simulation and Analysis</title>
     <style>
         /* General Styles */
         body {
@@ -134,7 +134,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h1>NFL Monte Carlo Simulation</h1>
+    <h1>NFL Monte Carlo Simulation and Correlation Analysis</h1>
+    
+    <!-- User Login/Registration -->
+    <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" class="form-input">
+        <label for="password">Password:</label>
+        <input type="password" id="password" class="form-input">
+        <button class="run-btn" onclick="login()">Login</button>
+        <button class="run-btn" onclick="register()">Register</button>
+    </div>
     
     <!-- Matchup Selection -->
     <div class="form-group">
@@ -160,6 +170,11 @@
     <div class="run-btn-group">
         <button class="run-btn" onclick="runSimulation()">Run Simulation</button>
         <button class="run-btn" onclick="runAllSimulations()">Run All</button>
+    </div>
+
+    <!-- Correlation Analysis Button -->
+    <div class="run-btn-group">
+        <button class="run-btn" onclick="window.open('/streamlit', '_blank')">Open Correlation Analysis</button>
     </div>
 
     <!-- Results -->
@@ -221,6 +236,18 @@
         return `~${(seconds / 3600).toFixed(1)} hours`;
     }
 
+    function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        // Implement login functionality (send to backend)
+    }
+
+    function register() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        // Implement register functionality (send to backend)
+    }
+
     function runSimulation() {
         const selectedMatchup = JSON.parse(document.getElementById('matchup').value);
         fetchSimulationResults(selectedMatchup, numIterations);
@@ -275,8 +302,6 @@
         `;
         document.getElementById('results').appendChild(resultSection);
     }
-</script>
-
+    </script>
 </body>
 </html>
-

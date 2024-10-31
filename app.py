@@ -3,8 +3,17 @@ from flask import Flask, request, jsonify, render_template
 import nfl_data_py as nfl
 import pandas as pd
 import numpy as np
+import streamlit as st  # Import for correlation analysis
+from utils.auth import hash_password, check_password  # User authentication functions
+from utils.user_database import initialize_database
+from utils.database import save_model, get_saved_models, load_model  # Model storage
+from correlation_analysis import correlation_analysis_page  # Correlation analysis page
 
+# Initialize the Flask app
 app = Flask(__name__)
+
+# Initialize the database
+initialize_database()
 
 # Fetch the current season's schedule for upcoming games
 def get_upcoming_games():
@@ -128,6 +137,7 @@ def run_all_simulations(home_team, away_team, spread_adjustment, team_stats):
 
     return {"Individual Results": results_by_simulation, "Aggregated Result": aggregated_result}
 
+# Flask routes
 @app.route('/upcoming_games', methods=['GET'])
 def get_upcoming_games_endpoint():
     games = get_upcoming_games()
@@ -154,5 +164,12 @@ def simulate_game():
 def index():
     return render_template('index.html')
 
+# Streamlit Correlation Analysis page
+def run_correlation_analysis():
+    st.title("Correlation Analysis")
+    correlation_analysis_page()
+
 if __name__ == '__main__':
+    # Initialize and run Streamlit for correlation analysis
+    run_correlation_analysis()
     app.run(debug=True)
