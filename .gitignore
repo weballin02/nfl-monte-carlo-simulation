@@ -33,8 +33,6 @@ env.bak/
 venv.bak/
 
 # PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -133,4 +131,18 @@ cython_debug/
 *.jpg
 *.jpeg
 *.gif
+
+# Data Files
+data/*.csv
+data/*.xlsx
+data/users.db
+
+# Models
+models/**/*.pkl
+
+# Logs
+*.log
+
+# Streamlit cache
+.streamlit/cache/
 
